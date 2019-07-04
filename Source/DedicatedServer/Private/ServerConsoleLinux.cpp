@@ -88,8 +88,10 @@ void DumpConsoleHelp();
 				if ( m_sInput.Len() >= 1 )
 				{
 					m_sInput.RemoveAt( m_sInput.Len() - 1 );
-
+					m_sInput.AppendChar(' ');
 					RedrawInputLine();
+					m_sInput.RemoveAt( m_sInput.Len() - 1 );
+					SetCursorPosition( coords( LINES - 1, m_sInput.Len() ) );
 				}
 			}
 			else if ( hInputEvents == 27 ) // Escape Key Event
@@ -192,11 +194,8 @@ void DumpConsoleHelp();
 			}
 			else
 			{
-				attron( COLOR_PAIR(1) );
 				m_sInput.AppendChar( hInputEvents );
-				addch( hInputEvents );
-				refresh();
-				attroff( COLOR_PAIR(1) );
+				RedrawInputLine();
 			}
 		}
 	}

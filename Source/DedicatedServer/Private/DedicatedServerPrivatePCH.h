@@ -10,4 +10,8 @@
 	#include "OnlineSubsystemSteam.h"
 
 	#include "ServerConsole.h"
+
+	#if PLATFORM_LINUX
+		#include "curses.h"
+	#endif
 #endif

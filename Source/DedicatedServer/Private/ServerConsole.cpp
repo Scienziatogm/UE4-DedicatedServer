@@ -2,10 +2,6 @@
 
 #include "DedicatedServerPrivatePCH.h"
 
-#if PLATFORM_LINUX
-#include "curses.h"
-#endif
-
 DEFINE_LOG_CATEGORY( LogServerConsole );
 
 #if WITH_SERVER_CODE
