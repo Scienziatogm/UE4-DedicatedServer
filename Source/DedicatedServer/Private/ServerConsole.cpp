@@ -2,13 +2,17 @@
 
 #include "DedicatedServerPrivatePCH.h"
 
+#if PLATFORM_LINUX
+#include "curses.h"
+#endif
+
 DEFINE_LOG_CATEGORY( LogServerConsole );
 
 // Fixme: We need to workaround a silly issue inside the engine where the help commands relies on Slate being present...
 // See: https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Engine/Private/UnrealEngine.cpp#L3151
 void DumpConsoleHelp()
 {
-	#if !UE_BUILD_SHIPPING
+	//#if !UE_BUILD_SHIPPING On server we could have a Shipping build and use the console
 		UE_LOG( LogServerConsole, Display, TEXT( "\n" )
 			TEXT( "Console Help:" ) TEXT( "\n" )
 			TEXT( "=============" ) TEXT( "\n" )
@@ -28,6 +32,7 @@ void DumpConsoleHelp()
 			TEXT( "<Console command> [Params]  Execute the console command with optional parameters" ) TEXT( "\n" )
 		);
 
+	#if !PLATFORM_LINUX
 		FString FilePath = FPaths::ProjectSavedDir() + TEXT( "ConsoleHelp.html" );
 
 		UE_LOG( LogServerConsole, Display, TEXT( "\n" )
@@ -35,7 +40,8 @@ void DumpConsoleHelp()
 		, *FilePath );
 
 		ConsoleCommandLibrary_DumpLibraryHTML( GEngine->GetWorld(), *GEngine, FilePath );
-	#endif
+	#endif //!PLATFORM_LINUX
+	//#endif //!UE_BUILD_SHIPPING
 }
 
 #if WITH_SERVER_CODE
@@ -83,6 +89,14 @@ void DumpConsoleHelp()
 			}
 		#elif PLATFORM_MAC
 		#elif PLATFORM_LINUX
+			initscr();
+			noecho();
+			cbreak();
+			keypad( stdscr, TRUE );
+			scrollok( stdscr, TRUE );
+			start_color();
+			init_pair( 1, COLOR_GREEN, COLOR_BLACK );
+			SetCursorPosition( coords( LINES - 1, 0 ) );
 		#else
 			#error You shall not pass!
 		#endif
@@ -98,29 +112,44 @@ void DumpConsoleHelp()
 		return m_pConsole->IsAttached();
 	}
 
-	void FServerConsole::Serialize( const TCHAR* sData, ELogVerbosity::Type eVerbosity, const class FName& sCategory, const double fTime )
-	{
-		FScopeLock hLock( &m_hLock );
+	#if PLATFORM_WINDOWS
+		void FServerConsole::Serialize( const TCHAR* sData, ELogVerbosity::Type eVerbosity, const class FName& sCategory, const double fTime )
+		{
+			FScopeLock hLock( &m_hLock );
 
-		#if PLATFORM_WINDOWS
-			COORD hCursorPosition = GetCursorPosition();
-		#endif
+			#if PLATFORM_WINDOWS
+				COORD hCursorPosition = GetCursorPosition();
+			#endif
 
-		ClearInputLine();
+			ClearInputLine();
 
-		m_pConsole->Serialize( sData, eVerbosity, sCategory, fTime );
+			m_pConsole->Serialize( sData, eVerbosity, sCategory, fTime );
 
-		RedrawInputLine();
+			RedrawInputLine();
 
-		#if PLATFORM_WINDOWS
-			hCursorPosition.Y = GetCursorPosition().Y;
+			#if PLATFORM_WINDOWS
+				hCursorPosition.Y = GetCursorPosition().Y;
 
-			SetCursorPosition( hCursorPosition );
-		#endif
-	}
+				SetCursorPosition( hCursorPosition );
+			#endif
+		}
+	#endif //PLATFORM_WINDOWS
 
 	void FServerConsole::Serialize( const TCHAR* sData, ELogVerbosity::Type eVerbosity, const class FName& sCategory )
 	{
+	#if PLATFORM_WINDOWS
 		Serialize( sData, eVerbosity, sCategory, -1.0 );
+	#elif PLATFORM_LINUX
+		//coords hCursorPosition = GetCursorPosition();
+
+		ClearInputLine();
+
+		m_pConsole->Serialize( sData, eVerbosity, sCategory );
+
+		RedrawInputLine();
+
+		/*hCursorPosition.Y = GetCursorPosition().Y;
+		SetCursorPosition( hCursorPosition );*/
+	#endif //PLATFORM_WINDOWS
 	}
-#endif
+#endif //WITH_SERVER_CODE

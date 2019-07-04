@@ -15,6 +15,24 @@ DECLARE_LOG_CATEGORY_EXTERN( LogServerConsole, Log, All );
 	#elif PLATFORM_LINUX
 		#include "Public/Linux/LinuxConsoleOutputDevice.h"
 		#define FOutputDeviceConsolePlatform FLinuxConsoleOutputDevice
+
+		struct coords
+		{
+			int X;
+			int Y;
+
+			coords( int Y, int X )
+			{
+				this->Y = Y;
+				this->X = X;
+			}
+
+			coords()
+			{
+				this->Y = 0;
+				this->X = 0;
+			}
+		};
 	#else
 		#error How did you get here?
 	#endif
@@ -32,8 +50,11 @@ DECLARE_LOG_CATEGORY_EXTERN( LogServerConsole, Log, All );
 			bool IsShown() override;
 			bool IsAttached() override;
 
-			void Serialize( const TCHAR* sData, ELogVerbosity::Type eVerbosity, const class FName& sCategory, const double fTime ) override;
 			void Serialize( const TCHAR* sData, ELogVerbosity::Type eVerbosity, const class FName& sCategory ) override;
+
+			#if PLATFORM_WINDOWS
+				void Serialize( const TCHAR* sData, ELogVerbosity::Type eVerbosity, const class FName& sCategory, const double fTime ) override;
+			#endif
 
 		protected:
 			void ClearInputLine();
@@ -42,6 +63,9 @@ DECLARE_LOG_CATEGORY_EXTERN( LogServerConsole, Log, All );
 			#if PLATFORM_WINDOWS
 				COORD								GetCursorPosition();
 				bool								SetCursorPosition( COORD hCursorPosition );
+			#elif PLATFORM_LINUX
+				coords								GetCursorPosition();
+				bool								SetCursorPosition( coords hCursorPosition );
 			#endif
 
 		private:
