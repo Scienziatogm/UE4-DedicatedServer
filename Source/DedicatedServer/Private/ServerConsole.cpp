@@ -8,43 +8,35 @@
 
 DEFINE_LOG_CATEGORY( LogServerConsole );
 
-// Fixme: We need to workaround a silly issue inside the engine where the help commands relies on Slate being present...
-// See: https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Engine/Private/UnrealEngine.cpp#L3151
-void DumpConsoleHelp()
-{
-	//#if !UE_BUILD_SHIPPING On server we could have a Shipping build and use the console
-		UE_LOG( LogServerConsole, Display, TEXT( "\n" )
-			TEXT( "Console Help:" ) TEXT( "\n" )
-			TEXT( "=============" ) TEXT( "\n" )
-			TEXT( "\n" )
-			TEXT( "A console variable is a engine wide key value pair." ) TEXT( "\n" )
-			TEXT( "The key is a string usually starting with the subsystem prefix followed by '.' e.g. r.BloomQuality." ) TEXT( "\n" )
-			TEXT( "The value can be of different tpe (e.g. float, int, string)." ) TEXT( "\n" )
-			TEXT( "A console command has no state associated with and gets executed immediately." ) TEXT( "\n" )
-			TEXT( "\n" )
-			TEXT( "Console variables can be put into ini files (e.g. ConsoleVariables.ini or BaseEngine.ini) with this syntax:" ) TEXT( "\n" )
-			TEXT( "<Console variable> = <value>" ) TEXT( "\n" )
-			TEXT( "\n" )
-			TEXT( "DumpConsoleCommands         Lists all console variables and commands that are registered (Some are not registered)" ) TEXT( "\n" )
-			TEXT( "<Console variable>          Get the console variable state" ) TEXT( "\n" )
-			TEXT( "<Console variable> ?        Get the console variable help text" ) TEXT( "\n" )
-			TEXT( "<Console variable> <value>  Set the console variable value" ) TEXT( "\n" )
-			TEXT( "<Console command> [Params]  Execute the console command with optional parameters" ) TEXT( "\n" )
-		);
-
-	#if !PLATFORM_LINUX
-		FString FilePath = FPaths::ProjectSavedDir() + TEXT( "ConsoleHelp.html" );
-
-		UE_LOG( LogServerConsole, Display, TEXT( "\n" )
-			TEXT( "To browse console variables open this: '%s'" )
-		, *FilePath );
-
-		ConsoleCommandLibrary_DumpLibraryHTML( GEngine->GetWorld(), *GEngine, FilePath );
-	#endif //!PLATFORM_LINUX
-	//#endif //!UE_BUILD_SHIPPING
-}
-
 #if WITH_SERVER_CODE
+	// Fixme: We need to workaround a silly issue inside the engine where the help commands relies on Slate being present...
+	// See: https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/Runtime/Engine/Private/UnrealEngine.cpp#L3151
+	void DumpConsoleHelp()
+	{
+		UE_LOG(LogEngine, Display, TEXT("Console Help:"));
+		UE_LOG(LogEngine, Display, TEXT("============="));
+		UE_LOG(LogEngine, Display, TEXT(" "));
+		UE_LOG(LogEngine, Display, TEXT("A console variable is a engine wide key value pair. The key is a string usually starting with the subsystem prefix followed"));
+		UE_LOG(LogEngine, Display, TEXT("by '.' e.g. r.BloomQuality. The value can be of different tpe (e.g. float, int, string). A console command has no state associated with"));
+		UE_LOG(LogEngine, Display, TEXT("and gets executed immediately."));
+		UE_LOG(LogEngine, Display, TEXT(" "));
+		UE_LOG(LogEngine, Display, TEXT("Console variables can be put into ini files (e.g. ConsoleVariables.ini or BaseEngine.ini) with this syntax:"));
+		UE_LOG(LogEngine, Display, TEXT("<Console variable> = <value>"));
+		UE_LOG(LogEngine, Display, TEXT(" "));
+		UE_LOG(LogEngine, Display, TEXT("DumpConsoleCommands         Lists all console variables and commands that are registered (Some are not registered)"));
+		UE_LOG(LogEngine, Display, TEXT("<Console variable>          Get the console variable state"));
+		UE_LOG(LogEngine, Display, TEXT("<Console variable> ?        Get the console variable help text"));
+		UE_LOG(LogEngine, Display, TEXT("<Console variable> <value>  Set the console variable value"));
+		UE_LOG(LogEngine, Display, TEXT("<Console command> [Params]  Execute the console command with optional parameters"));
+
+		UE_LOG(LogEngine, Display, TEXT(" "));
+
+		FString FilePath = FPaths::ProjectSavedDir() + TEXT("ConsoleHelp.html");
+
+		UE_LOG(LogEngine, Display, TEXT("To browse console variables open this: '%s'"), *FilePath);
+		UE_LOG(LogEngine, Display, TEXT(" "));
+	}
+
 	#if PLATFORM_WINDOWS
 		#include "AllowWindowsPlatformTypes.h"
 
