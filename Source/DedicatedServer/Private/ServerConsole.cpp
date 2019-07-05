@@ -77,6 +77,7 @@ DEFINE_LOG_CATEGORY( LogServerConsole );
 			}
 		#elif PLATFORM_MAC
 		#elif PLATFORM_LINUX
+			// Initialize curses library https://linux.die.net/man/3/ncurses
 			initscr();
 			noecho();
 			cbreak();
@@ -84,7 +85,7 @@ DEFINE_LOG_CATEGORY( LogServerConsole );
 			scrollok( stdscr, TRUE );
 			start_color();
 			init_pair( 1, COLOR_GREEN, COLOR_BLACK );
-			SetCursorPosition( coords( LINES - 1, 0 ) );
+			SetCursorPosition( COORD( LINES - 1, 0 ) );
 		#else
 			#error You shall not pass!
 		#endif
@@ -121,14 +122,14 @@ DEFINE_LOG_CATEGORY( LogServerConsole );
 				SetCursorPosition( hCursorPosition );
 			#endif
 		}
-	#endif //PLATFORM_WINDOWS
+	#endif
 
 	void FServerConsole::Serialize( const TCHAR* sData, ELogVerbosity::Type eVerbosity, const class FName& sCategory )
 	{
 	#if PLATFORM_WINDOWS
 		Serialize( sData, eVerbosity, sCategory, -1.0 );
 	#elif PLATFORM_LINUX
-		//coords hCursorPosition = GetCursorPosition();
+		//COORD hCursorPosition = GetCursorPosition();
 
 		ClearInputLine();
 
@@ -138,6 +139,6 @@ DEFINE_LOG_CATEGORY( LogServerConsole );
 
 		/*hCursorPosition.Y = GetCursorPosition().Y;
 		SetCursorPosition( hCursorPosition );*/
-	#endif //PLATFORM_WINDOWS
+	#endif
 	}
-#endif //WITH_SERVER_CODE
+#endif

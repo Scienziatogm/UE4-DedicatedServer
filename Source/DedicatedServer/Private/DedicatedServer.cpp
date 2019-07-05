@@ -117,7 +117,7 @@ void FDedicatedServerModule::ShutdownModule()
 		{
 			g_pConsole->SendNullInput();
 
-			m_hTick.Reset(); // We want to stop the async task, because our module is being closed
+			m_hTick.Reset();
 		}
 	#endif
 }

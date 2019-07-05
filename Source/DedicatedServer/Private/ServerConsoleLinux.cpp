@@ -2,9 +2,9 @@
 
 #include "DedicatedServerPrivatePCH.h"
 #if PLATFORM_LINUX
-#include <iostream>
-#include <sstream>
-#include <string>
+	#include <iostream>
+	#include <sstream>
+	#include <string>
 #endif
 
 void DumpConsoleHelp();
@@ -13,190 +13,192 @@ void DumpConsoleHelp();
 	void FServerConsole::Tick()
 	{
 		int hInputEvents = getch();
-		if ( hInputEvents != ERR )
+		if ( hInputEvents == ERR )
 		{
-			if ( hInputEvents == '\n' )
+			// Handle Error
+			return;
+		}
+		if ( hInputEvents == '\n' )
+		{
+			auto& sInput = m_sInput;
+			AsyncTask( ENamedThreads::GameThread, [this, sInput]()
 			{
-				auto& sInput = m_sInput;
-				AsyncTask( ENamedThreads::GameThread, [this, sInput]()
+				TCHAR sOutput[MAX_SPRINTF] = TEXT( "" );
+				if ( sInput.StartsWith( TEXT( "help" ) ) )
 				{
-					TCHAR sOutput[MAX_SPRINTF] = TEXT("");
-					if ( sInput.StartsWith( TEXT( "help" ) ) )
-					{
-						ClearInputLine();
-						m_sInput.Empty();
+					ClearInputLine();
+					m_sInput.Empty();
 
-						DumpConsoleHelp();
+					DumpConsoleHelp();
 
-						attron( COLOR_PAIR( 1 ) );
-						FCString::Sprintf( sOutput, TEXT( "> %s%s" ), *sInput, LINE_TERMINATOR );
-						printf( "%s", TCHAR_TO_ANSI( sOutput ) );
-						refresh();
-						attroff( COLOR_PAIR( 1 ) );
+					attron( COLOR_PAIR( 1 ) );
+					FCString::Sprintf( sOutput, TEXT( "> %s%s" ), *sInput, LINE_TERMINATOR );
+					printf( "%s", TCHAR_TO_ANSI( sOutput ) );
+					refresh();
+					attroff( COLOR_PAIR( 1 ) );
 
-						m_hCommandHistory.Add(sInput);
+					m_hCommandHistory.Add( sInput );
 
-						RedrawInputLine();
-					}
-					else if ( GEngine->Exec( GWorld, *sInput ) )
-					{
-						ClearInputLine();
-						m_sInput.Empty();
-
-						attron( COLOR_PAIR( 1 ) );
-						FCString::Sprintf( sOutput, TEXT( "> %s%s" ), *sInput, LINE_TERMINATOR );
-						printf( "%s", TCHAR_TO_ANSI( sOutput ) );
-						refresh();
-						attroff( COLOR_PAIR( 1 ) );
-
-						m_hCommandHistory.Add( sInput );
-
-						RedrawInputLine();
-					}
-					else if ( GWorld->GetAuthGameMode() != nullptr && GWorld->GetAuthGameMode()->ProcessConsoleExec( *sInput, *GLog, nullptr ) )
-					{
-						ClearInputLine();
-						m_sInput.Empty();
-
-						attron( COLOR_PAIR( 1 ) );
-						FCString::Sprintf( sOutput, TEXT( "> %s%s" ), *sInput, LINE_TERMINATOR );
-						printf( "%s", TCHAR_TO_ANSI( sOutput ) );
-						refresh();
-						attroff( COLOR_PAIR( 1 ) );
-
-						m_hCommandHistory.Add( sInput );
-
-						RedrawInputLine();
-					}
-					else
-					{
-						ClearInputLine();
-						m_sInput.Empty();
-
-						attron( COLOR_PAIR( 1 ) );
-						FCString::Sprintf( sOutput, TEXT( "Unknown Command: %s%s" ), *sInput, LINE_TERMINATOR );
-						printf( "%s", TCHAR_TO_ANSI( sOutput ) );
-						refresh();
-						attroff( COLOR_PAIR( 1 ) );
-
-						RedrawInputLine();
-					}
-				});
-			}
-			else if ( hInputEvents == '\b' )
-			{
-				if ( m_sInput.Len() >= 1 )
-				{
-					m_sInput.RemoveAt( m_sInput.Len() - 1 );
-					m_sInput.AppendChar(' ');
 					RedrawInputLine();
-					m_sInput.RemoveAt( m_sInput.Len() - 1 );
-					SetCursorPosition( coords( LINES - 1, m_sInput.Len() ) );
 				}
-			}
-			else if ( hInputEvents == 27 ) // Escape Key Event
-			{
-				ClearInputLine();
-				m_sInput.Empty();
-			}
-			else if ( hInputEvents == '\t' )
-			{
-				// ToDo: AutoCompletion
-			}
-			else if ( hInputEvents == KEY_UP )
-			{
-				if ( m_hCommandHistory.Num() == 0 ) return;
-
-				if ( m_iCommandHistoryIndex == -1 ) m_iCommandHistoryIndex = m_hCommandHistory.Num() - 1;
-				else --m_iCommandHistoryIndex;
-
-				if ( m_iCommandHistoryIndex < 0 ) m_iCommandHistoryIndex = 0;
-
-				if ( ( m_iCommandHistoryIndex + 1) == m_hCommandHistory.Num() && m_sUserInput.Len() == 0 ) m_sUserInput = m_sInput;
-
-				m_sInput = m_hCommandHistory[m_iCommandHistoryIndex];
-
-				RedrawInputLine();
-			}
-			else if ( hInputEvents == KEY_DOWN )
-			{
-				if ( m_iCommandHistoryIndex == -1 ) return;
-
-				++m_iCommandHistoryIndex;
-
-				if ( m_iCommandHistoryIndex > m_hCommandHistory.Num() ) m_iCommandHistoryIndex = m_hCommandHistory.Num();
-
-				if ( m_iCommandHistoryIndex == m_hCommandHistory.Num() )
+				else if ( GEngine->Exec( GWorld, *sInput ) )
 				{
-					if ( m_sUserInput.Len() > 0 ) m_sInput = m_sUserInput;
-					else m_sInput.Empty();
+					ClearInputLine();
+					m_sInput.Empty();
+
+					attron( COLOR_PAIR( 1 ) );
+					FCString::Sprintf( sOutput, TEXT( "> %s%s" ), *sInput, LINE_TERMINATOR );
+					printf( "%s", TCHAR_TO_ANSI( sOutput ) );
+					refresh();
+					attroff( COLOR_PAIR( 1 ) );
+
+					m_hCommandHistory.Add( sInput );
+
+					RedrawInputLine();
+				}
+				else if ( GWorld->GetAuthGameMode() != nullptr && GWorld->GetAuthGameMode()->ProcessConsoleExec( *sInput, *GLog, nullptr ) )
+				{
+					ClearInputLine();
+					m_sInput.Empty();
+
+					attron( COLOR_PAIR( 1 ) );
+					FCString::Sprintf( sOutput, TEXT( "> %s%s" ), *sInput, LINE_TERMINATOR );
+					printf( "%s", TCHAR_TO_ANSI( sOutput ) );
+					refresh();
+					attroff( COLOR_PAIR( 1 ) );
+
+					m_hCommandHistory.Add( sInput );
 
 					RedrawInputLine();
 				}
 				else
 				{
-					m_sInput = m_hCommandHistory[m_iCommandHistoryIndex];
+					ClearInputLine();
+					m_sInput.Empty();
+
+					attron( COLOR_PAIR( 1 ) );
+					FCString::Sprintf( sOutput, TEXT( "Unknown Command: %s%s" ), *sInput, LINE_TERMINATOR );
+					printf( "%s", TCHAR_TO_ANSI( sOutput ) );
+					refresh();
+					attroff( COLOR_PAIR( 1 ) );
 
 					RedrawInputLine();
 				}
-			}
-			else if ( hInputEvents == KEY_LEFT )
+			} );
+		}
+		else if ( hInputEvents == '\b' )
+		{
+			if ( m_sInput.Len() >= 1 )
 			{
-				coords hCursorPosition(GetCursorPosition());
-
-				if ( hCursorPosition.X > 0 )
-				{
-					--hCursorPosition.X;
-					SetCursorPosition( hCursorPosition );
-				}
+				m_sInput.RemoveAt( m_sInput.Len() - 1 );
+				m_sInput.AppendChar( ' ' );
+				RedrawInputLine();
+				m_sInput.RemoveAt( m_sInput.Len() - 1 );
+				SetCursorPosition( COORD( LINES - 1, m_sInput.Len() ) );
 			}
-			else if ( hInputEvents == KEY_RIGHT )
-			{
-				coords hCursorPosition( GetCursorPosition() );
+		}
+		else if ( hInputEvents == 27 ) // Escape Key Event
+		{
+			ClearInputLine();
+			m_sInput.Empty();
+		}
+		else if ( hInputEvents == '\t' )
+		{
+			// ToDo: AutoCompletion
+		}
+		else if ( hInputEvents == KEY_UP )
+		{
+			if ( m_hCommandHistory.Num() == 0 ) return;
 
-				if ( hCursorPosition.X < m_sInput.Len() )
-				{
-					++hCursorPosition.X;
-					SetCursorPosition( hCursorPosition );
-				}
-			}
-			else if ( hInputEvents == KEY_HOME )
-			{
-				coords hCursorPosition( GetCursorPosition() );
-				hCursorPosition.X = 0;
-				SetCursorPosition( hCursorPosition );
-			}
-			else if ( hInputEvents == KEY_END )
-			{
-				coords hCursorPosition( GetCursorPosition() );
-				hCursorPosition.X = m_sInput.Len();
-				SetCursorPosition( hCursorPosition );
-			}
-			else if ( hInputEvents == KEY_DC )
-			{
-				coords hCursorPosition( GetCursorPosition() );
+			if ( m_iCommandHistoryIndex == -1 ) m_iCommandHistoryIndex = m_hCommandHistory.Num() - 1;
+			else --m_iCommandHistoryIndex;
 
-				if ( hCursorPosition.X <= m_sInput.Len() )
-				{
-					m_sInput.RemoveAt( hCursorPosition.X );
-					m_sInput.AppendChar( ' ' );
+			if ( m_iCommandHistoryIndex < 0 ) m_iCommandHistoryIndex = 0;
 
-					RedrawInputLine();
+			if ( ( m_iCommandHistoryIndex + 1 ) == m_hCommandHistory.Num() && m_sUserInput.Len() == 0 ) m_sUserInput = m_sInput;
 
-					m_sInput.RemoveAt( m_sInput.Len() - 1 );
+			m_sInput = m_hCommandHistory[m_iCommandHistoryIndex];
 
-					SetCursorPosition( hCursorPosition );
-				}
-			}
-			else if (hInputEvents == KEY_RESIZE)
+			RedrawInputLine();
+		}
+		else if ( hInputEvents == KEY_DOWN )
+		{
+			if ( m_iCommandHistoryIndex == -1 ) return;
+
+			++m_iCommandHistoryIndex;
+
+			if ( m_iCommandHistoryIndex > m_hCommandHistory.Num() ) m_iCommandHistoryIndex = m_hCommandHistory.Num();
+
+			if ( m_iCommandHistoryIndex == m_hCommandHistory.Num() )
 			{
-				refresh();
+				if ( m_sUserInput.Len() > 0 ) m_sInput = m_sUserInput;
+				else m_sInput.Empty();
+
+				RedrawInputLine();
 			}
 			else
 			{
-				m_sInput.AppendChar( hInputEvents );
+				m_sInput = m_hCommandHistory[m_iCommandHistoryIndex];
+
 				RedrawInputLine();
 			}
+		}
+		else if ( hInputEvents == KEY_LEFT )
+		{
+			COORD hCursorPosition( GetCursorPosition() );
+
+			if ( hCursorPosition.X > 0 )
+			{
+				--hCursorPosition.X;
+				SetCursorPosition( hCursorPosition );
+			}
+		}
+		else if ( hInputEvents == KEY_RIGHT )
+		{
+			COORD hCursorPosition( GetCursorPosition() );
+
+			if ( hCursorPosition.X < m_sInput.Len() )
+			{
+				++hCursorPosition.X;
+				SetCursorPosition( hCursorPosition );
+			}
+		}
+		else if ( hInputEvents == KEY_HOME )
+		{
+			COORD hCursorPosition( GetCursorPosition() );
+			hCursorPosition.X = 0;
+			SetCursorPosition( hCursorPosition );
+		}
+		else if ( hInputEvents == KEY_END )
+		{
+			COORD hCursorPosition( GetCursorPosition() );
+			hCursorPosition.X = m_sInput.Len();
+			SetCursorPosition( hCursorPosition );
+		}
+		else if ( hInputEvents == KEY_DC )
+		{
+			COORD hCursorPosition( GetCursorPosition() );
+
+			if ( hCursorPosition.X <= m_sInput.Len() )
+			{
+				m_sInput.RemoveAt( hCursorPosition.X );
+				m_sInput.AppendChar( ' ' );
+
+				RedrawInputLine();
+
+				m_sInput.RemoveAt( m_sInput.Len() - 1 );
+
+				SetCursorPosition( hCursorPosition );
+			}
+		}
+		else if ( hInputEvents == KEY_RESIZE )
+		{
+			refresh();
+		}
+		else
+		{
+			m_sInput.AppendChar( hInputEvents );
+			RedrawInputLine();
 		}
 	}
 
@@ -207,9 +209,9 @@ void DumpConsoleHelp();
 
 	void FServerConsole::ClearInputLine()
 	{
-		coords hCursorPosition( GetCursorPosition() );
+		COORD hCursorPosition( GetCursorPosition() );
 		if ( hCursorPosition.X == 0 ) return;
-		coords nCursorPosition( hCursorPosition.Y, 0 );
+		COORD nCursorPosition( hCursorPosition.Y, 0 );
 		SetCursorPosition( nCursorPosition );
 		clrtoeol();
 	}
@@ -218,24 +220,24 @@ void DumpConsoleHelp();
 	{
 		ClearInputLine();
 
-		if (!m_sInput.IsEmpty())
+		if ( !m_sInput.IsEmpty() )
 		{
-			attron( COLOR_PAIR(1) );
+			attron( COLOR_PAIR( 1 ) );
 			printf( "%s", TCHAR_TO_ANSI( *m_sInput ) );
-			SetCursorPosition( coords( LINES - 1, m_sInput.Len() ) );
+			SetCursorPosition( COORD( LINES - 1, m_sInput.Len() ) );
 			refresh();
 			attroff( COLOR_PAIR( 1 ) );
 		}
 	}
 
-	coords FServerConsole::GetCursorPosition()
+	COORD FServerConsole::GetCursorPosition()
 	{
-		coords retval;
+		COORD retval;
 		getyx( stdscr, retval.Y, retval.X );
 		return retval;
 	}
 
-	bool FServerConsole::SetCursorPosition( coords hCursorPosition )
+	bool FServerConsole::SetCursorPosition( COORD hCursorPosition )
 	{
 		int retval = move( hCursorPosition.Y, hCursorPosition.X );
 		refresh();

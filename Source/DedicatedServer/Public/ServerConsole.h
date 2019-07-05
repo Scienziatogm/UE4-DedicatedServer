@@ -16,18 +16,18 @@ DECLARE_LOG_CATEGORY_EXTERN( LogServerConsole, Log, All );
 		#include "Public/Linux/LinuxConsoleOutputDevice.h"
 		#define FOutputDeviceConsolePlatform FLinuxConsoleOutputDevice
 
-		struct coords
+		struct COORD
 		{
 			int X;
 			int Y;
 
-			coords( int Y, int X )
+			COORD( int Y, int X )
 			{
 				this->Y = Y;
 				this->X = X;
 			}
 
-			coords()
+			COORD()
 			{
 				this->Y = 0;
 				this->X = 0;
@@ -60,13 +60,10 @@ DECLARE_LOG_CATEGORY_EXTERN( LogServerConsole, Log, All );
 			void ClearInputLine();
 			void RedrawInputLine();
 
-			#if PLATFORM_WINDOWS
-				COORD								GetCursorPosition();
-				bool								SetCursorPosition( COORD hCursorPosition );
-			#elif PLATFORM_LINUX
-				coords								GetCursorPosition();
-				bool								SetCursorPosition( coords hCursorPosition );
-			#endif
+	#if PLATFORM_WINDOWS || PLATFORM_LINUX
+			COORD								GetCursorPosition();
+			bool								SetCursorPosition( COORD hCursorPosition );
+	#endif
 
 		private:
 			FOutputDeviceConsolePlatform*			m_pConsole;
